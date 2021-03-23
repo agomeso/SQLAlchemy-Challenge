@@ -63,15 +63,9 @@ def stations():
     # Query all stations
     results = session.query(Station.station).all()
     session.close()
-    # Create a dictionary from the row data and append to a list of all_passengers
-   # all_passengers = []
-    # for name, age, sex in results:
-    #     passenger_dict = {}
-    #     passenger_dict["name"] = name
-    #     passenger_dict["age"] = age
-    #     passenger_dict["sex"] = sex
-    #     all_passengers.append(passenger_dict)
-    return jsonify(results)
+    # Convert list of lists into normal list
+    all_stations = list(np.ravel(results))
+    return jsonify(all_stations)
 
 
 @app.route("/api/v1.0/tobs")
