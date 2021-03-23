@@ -51,10 +51,8 @@ def precipitation():
         pcpt_dict = {}
         pcpt_dict["date"] = date
         pcpt_dict["pcpt"] = pcpt
-        all_dates.append(all_dates)
-    # Convert list of tuples into normal list
-    # all_names = list(np.ravel(results))
-    return jsonify(results)
+        all_dates.append(pcpt_dict)
+    return jsonify(all_dates)
 
 
 @app.route("/api/v1.0/stations")
