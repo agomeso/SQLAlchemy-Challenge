@@ -105,20 +105,17 @@ def start(start):
     recent = recent[0]
     year_ago = dt.date.fromisoformat(recent) - dt.timedelta(days=365)
     """Return a JSON list of temperature observations (TOBS) for a given time frame."""
+    # Prepare query
+    sel = [func.min(Measurement.tobs), func.avg(
+        Measurement.tobs), func.max(Measurement.tobs)]
     # Query all stations
-    results = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
+    results = session.query(*sel).\
         filter(func.strftime("%Y-%m-%d", Measurement.date) >= start).\
         filter(func.strftime("%Y-%m-%d", Measurement.date)
                <= year_ago).order_by(Measurement.date).all()
     session.close()
-    all_stations_start = []
-    for station, date, tobs in results:
-        stations_start_dict = {}
-        stations_start_dict["station"] = station
-        stations_start_dict["date"] = date
-        stations_start_dict["tobs"] = tobs
-        all_stations_start.append(stations_start_dict)
-    return jsonify(all_stations_start)
+    all_stations = list(np.ravel(results))
+    return jsonify(all_stations)
 
 
 @app.route("/api/v1.0/<start>/<end>")
@@ -129,20 +126,17 @@ def by_date(start, end):
         Measurement.date.desc()).first()
     recent = recent[0]
     """Return a JSON list of temperature observations (TOBS) for a given time frame."""
+    # Prepare query
+    sel = [func.min(Measurement.tobs), func.avg(
+        Measurement.tobs), func.max(Measurement.tobs)]
     # Query all stations
-    results = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
+    results = session.query(*sel).\
         filter(func.strftime("%Y-%m-%d", Measurement.date) >= start).\
         filter(func.strftime("%Y-%m-%d", Measurement.date)
                <= end).order_by(Measurement.date).all()
     session.close()
-    all_stations_bydate = []
-    for station, date, tobs in results:
-        stations_bydate_dict = {}
-        stations_bydate_dict["station"] = station
-        stations_bydate_dict["date"] = date
-        stations_bydate_dict["tobs"] = tobs
-        all_stations_bydate.append(stations_bydate_dict)
-    return jsonify(all_stations_bydate)
+    all_stations = list(np.ravel(results))
+    return jsonify(all_stations)
 
 
 if __name__ == '__main__':
