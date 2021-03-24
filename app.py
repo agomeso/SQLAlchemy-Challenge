@@ -5,6 +5,7 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
 from flask import Flask, jsonify
+from sqlalchemy import or_
 #################################################
 # Database Setup
 #################################################
@@ -81,40 +82,67 @@ def tobs():
     recent = recent[0]
     year_ago = dt.date.fromisoformat(recent) - dt.timedelta(days=365)
     # Query all stations
-    results = session.query(Measurement.tobs).\
-        filter(Measurement.station == "USC00519281").\
+    results = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
         filter(func.strftime("%Y-%m-%d", Measurement.date) <= recent).\
         filter(func.strftime("%Y-%m-%d", Measurement.date) >= year_ago).all()
     session.close()
-    # Create a dictionary from the row data and append to a list of all_passengers
-   # all_passengers = []
-    # for name, age, sex in results:
-    #     passenger_dict = {}
-    #     passenger_dict["name"] = name
-    #     passenger_dict["age"] = age
-    #     passenger_dict["sex"] = sex
-    #     all_passengers.append(passenger_dict)
-    return jsonify(results)
+    all_stations = []
+    for station, date, tobs in results:
+        stations_dict = {}
+        stations_dict["station"] = station
+        stations_dict["date"] = date
+        stations_dict["tobs"] = tobs
+        all_stations.append(stations_dict)
+    return jsonify(all_stations)
 
 
-# @app.route("/api/v1.0/<start>/<end>")
-# def by_date(start, end):
-#     # Create our session (link) from Python to the DB
-#     session = Session(engine)
-#     """Return a JSON list of temperature observations (TOBS) for the previous year."""
-#     # Query all stations
-#     results = session.query(Measurement.tobs, Measurement.date).all()
-#     session.close()
-#     for date in results:
-#         # Create a dictionary from the row data and append to a list of all_passengers
-#        # all_passengers = []
-#         # for name, age, sex in results:
-#         #     passenger_dict = {}
-#         #     passenger_dict["name"] = name
-#         #     passenger_dict["age"] = age
-#         #     passenger_dict["sex"] = sex
-#         #     all_passengers.append(passenger_dict)
-#         return jsonify(results)
+@app.route("/api/v1.0/<start>")
+def start(start):
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+    recent = session.query(Measurement.date).order_by(
+        Measurement.date.desc()).first()
+    recent = recent[0]
+    year_ago = dt.date.fromisoformat(recent) - dt.timedelta(days=365)
+    """Return a JSON list of temperature observations (TOBS) for a given time frame."""
+    # Query all stations
+    results = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
+        filter(func.strftime("%Y-%m-%d", Measurement.date) >= start).\
+        filter(func.strftime("%Y-%m-%d", Measurement.date)
+               <= year_ago).order_by(Measurement.date).all()
+    session.close()
+    all_stations_start = []
+    for station, date, tobs in results:
+        stations_start_dict = {}
+        stations_start_dict["station"] = station
+        stations_start_dict["date"] = date
+        stations_start_dict["tobs"] = tobs
+        all_stations_start.append(stations_start_dict)
+    return jsonify(all_stations_start)
+
+
+@app.route("/api/v1.0/<start>/<end>")
+def by_date(start, end):
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+    recent = session.query(Measurement.date).order_by(
+        Measurement.date.desc()).first()
+    recent = recent[0]
+    """Return a JSON list of temperature observations (TOBS) for a given time frame."""
+    # Query all stations
+    results = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
+        filter(func.strftime("%Y-%m-%d", Measurement.date) >= start).\
+        filter(func.strftime("%Y-%m-%d", Measurement.date)
+               <= end).order_by(Measurement.date).all()
+    session.close()
+    all_stations_bydate = []
+    for station, date, tobs in results:
+        stations_bydate_dict = {}
+        stations_bydate_dict["station"] = station
+        stations_bydate_dict["date"] = date
+        stations_bydate_dict["tobs"] = tobs
+        all_stations_bydate.append(stations_bydate_dict)
+    return jsonify(all_stations_bydate)
 
 
 if __name__ == '__main__':
